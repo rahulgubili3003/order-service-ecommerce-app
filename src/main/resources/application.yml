@@ -10,3 +10,6 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+product-service-api:
+  url: http://localhost:8091
