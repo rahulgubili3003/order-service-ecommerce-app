@@ -16,7 +16,7 @@ class OrderController(private val orderService: OrderService) {
 
     @PostMapping("/place-order")
     fun placeOrder(@Valid @RequestBody placeOrder: PlaceOrder): ResponseEntity<OkResponse> {
-        val order = orderService.placeOrder(placeOrder)
-        return ResponseEntity.ok(OkResponse(data = order.productsList))
+        val orderId = orderService.placeOrder(placeOrder)
+        return ResponseEntity.ok(OkResponse(data = orderId))
     }
 }
