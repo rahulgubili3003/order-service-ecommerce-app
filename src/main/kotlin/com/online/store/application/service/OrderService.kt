@@ -1,10 +1,11 @@
 package com.online.store.application.service
 
 import com.online.store.application.dataaccess.feign.ProductServiceFeign
+import com.online.store.application.dto.kafka.OrderPlacedEvent
 import com.online.store.application.dto.request.GetInventoryDetails
 import com.online.store.application.dto.request.PlaceOrder
-import com.online.store.application.entity.Orders
 import com.online.store.application.exception.OutOfStockException
+import com.online.store.application.kafka.OrderEventProducer
 import com.online.store.application.repository.OrdersRepository
 import com.online.store.application.util.DtoToEntityMapper
 import jakarta.transaction.Transactional
@@ -17,7 +18,7 @@ class OrderService(
 ) {
 
     @Transactional
-    fun placeOrder(placeOrder: PlaceOrder): Orders {
+    fun placeOrder(placeOrder: PlaceOrder): Long? {
         val productRequestsMap = placeOrder.productIds.associateBy({ it.productId }, { it.quantity })
         val productIdList = placeOrder.productIds.stream().map { it.productId }.toList()
         val getInventoryDetails = GetInventoryDetails(
@@ -29,6 +30,8 @@ class OrderService(
             throw OutOfStockException("The following items are not present: $outOfStockProductIds")
         }
         val order = DtoToEntityMapper.mapOrdersDtoToEntity(placeOrder)
-       return ordersRepository.save(order)
+        val savedOrder = ordersRepository.save(order)
+        OrderEventProducer.send(OrderPlacedEvent(orderId = savedOrder.id))
+        return savedOrder.id
     }
 }
